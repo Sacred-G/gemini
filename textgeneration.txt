@@ -1,0 +1,163 @@
+Text generation
+
+The Gemini API can generate text output in response to various inputs, including text, images, video, and audio. This guide shows you how to generate text using text and image inputs. It also covers streaming, chat, and system instructions.
+
+Before you begin
+Before calling the Gemini API, ensure you have your SDK of choice installed, and a Gemini API key configured and ready to use.
+
+Text input
+The simplest way to generate text using the Gemini API is to provide the model with a single text-only input, as shown in this example:
+
+Python
+JavaScript
+Go
+REST
+
+from google import genai
+
+client = genai.Client(api_key="GEMINI_API_KEY")
+
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents=["How does AI work?"]
+)
+print(response.text)
+Image input
+The Gemini API supports multimodal inputs that combine text and media files. The following example shows how to generate text from text and image input:
+
+Python
+JavaScript
+Go
+REST
+
+from PIL import Image
+from google import genai
+
+client = genai.Client(api_key="GEMINI_API_KEY")
+
+image = Image.open("/path/to/organ.png")
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents=[image, "Tell me about this instrument"]
+)
+print(response.text)
+Streaming output
+By default, the model returns a response after completing the entire text generation process. You can achieve faster interactions by using streaming to return instances of GenerateContentResponse as they're generated.
+
+Python
+JavaScript
+Go
+REST
+
+from google import genai
+
+client = genai.Client(api_key="GEMINI_API_KEY")
+
+response = client.models.generate_content_stream(
+    model="gemini-2.0-flash",
+    contents=["Explain how AI works"]
+)
+for chunk in response:
+    print(chunk.text, end="")
+Multi-turn conversations
+The Gemini SDK lets you collect multiple rounds of questions and responses into a chat. The chat format enables users to step incrementally toward answers and to get help with multipart problems. This SDK implementation of chat provides an interface to keep track of conversation history, but behind the scenes it uses the same generateContent method to create the response.
+
+The following code example shows a basic chat implementation:
+
+Python
+JavaScript
+Go
+REST
+
+from google import genai
+
+client = genai.Client(api_key="GEMINI_API_KEY")
+chat = client.chats.create(model="gemini-2.0-flash")
+
+response = chat.send_message("I have 2 dogs in my house.")
+print(response.text)
+
+response = chat.send_message("How many paws are in my house?")
+print(response.text)
+
+for message in chat.get_history():
+    print(f'role - {message.role}',end=": ")
+    print(message.parts[0].text)
+You can also use streaming with chat, as shown in the following example:
+
+Python
+JavaScript
+Go
+REST
+
+from google import genai
+
+client = genai.Client(api_key="GEMINI_API_KEY")
+chat = client.chats.create(model="gemini-2.0-flash")
+
+response = chat.send_message_stream("I have 2 dogs in my house.")
+for chunk in response:
+    print(chunk.text, end="")
+
+response = chat.send_message_stream("How many paws are in my house?")
+for chunk in response:
+    print(chunk.text, end="")
+
+for message in chat.get_history():
+    print(f'role - {message.role}', end=": ")
+    print(message.parts[0].text)
+Configuration parameters
+Every prompt you send to the model includes parameters that control how the model generates responses. You can configure these parameters, or let the model use the default options.
+
+The following example shows how to configure model parameters:
+
+Python
+JavaScript
+Go
+REST
+
+from google import genai
+from google.genai import types
+
+client = genai.Client(api_key="GEMINI_API_KEY")
+
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents=["Explain how AI works"],
+    config=types.GenerateContentConfig(
+        max_output_tokens=500,
+        temperature=0.1
+    )
+)
+print(response.text)
+Here are some of the model parameters you can configure. (Naming conventions vary by programming language.)
+
+stopSequences: Specifies the set of character sequences (up to 5) that will stop output generation. If specified, the API will stop at the first appearance of a stop_sequence. The stop sequence won't be included as part of the response.
+temperature: Controls the randomness of the output. Use higher values for more creative responses, and lower values for more deterministic responses. Values can range from [0.0, 2.0].
+maxOutputTokens: Sets the maximum number of tokens to include in a candidate.
+topP: Changes how the model selects tokens for output. Tokens are selected from the most to least probable until the sum of their probabilities equals the topP value. The default topP value is 0.95.
+topK: Changes how the model selects tokens for output. A topK of 1 means the selected token is the most probable among all the tokens in the model's vocabulary, while a topK of 3 means that the next token is selected from among the 3 most probable using the temperature. Tokens are further filtered based on topP with the final token selected using temperature sampling.
+System instructions
+System instructions let you steer the behavior of a model based on your specific use case. When you provide system instructions, you give the model additional context to help it understand the task and generate more customized responses. The model should adhere to the system instructions over the full interaction with the user, enabling you to specify product-level behavior separate from the prompts provided by end users.
+
+You can set system instructions when you initialize your model:
+
+Python
+JavaScript
+Go
+REST
+
+from google import genai
+from google.genai import types
+
+client = genai.Client(api_key="GEMINI_API_KEY")
+
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    config=types.GenerateContentConfig(
+        system_instruction="You are a cat. Your name is Neko."),
+    contents="Hello there"
+)
+
+print(response.text)
+Then, you can send requests to the model as usual.
