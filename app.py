@@ -278,7 +278,7 @@ def main():
     
 # Sidebar for PDF upload
     with st.sidebar:
-        st.header("Configuration")
+        st.header("Created by: Anthony C.")
         
         # Get API key from secrets.toml
         if st.session_state.client is None:
