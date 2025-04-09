@@ -271,25 +271,19 @@ def main():
         with st.spinner("Preparing reference materials..."):
             upload_pdrs_file(st.session_state.client)
     
-    # Sidebar for API key input and PDF upload
+# Sidebar for PDF upload
     with st.sidebar:
         st.header("Configuration")
         
-        # Get API key from environment variable or user input
-        env_api_key = os.getenv("GEMINI_API_KEY")
-        
-        if env_api_key and st.session_state.client is None:
-            # Initialize client with API key from environment variable
-            if initialize_gemini_client(env_api_key):
-                st.success("Gemini client initialized with API key from environment variable!")
-        
-        # API key input (only shown if not initialized from environment)
+        # Get API key from secrets.toml
         if st.session_state.client is None:
-            api_key = st.text_input("Enter your Gemini API Key", type="password")
-            
-            if api_key:
+            try:
+                api_key = st.secrets["GEMINI_API_KEY"]
                 if initialize_gemini_client(api_key):
-                    st.success("Gemini client initialized successfully!")
+                    st.success("Gemini client initialized successfully from secrets!")
+            except Exception as e:
+                st.error(f"Error initializing Gemini client from secrets: {str(e)}")
+                st.info("Please add your Gemini API key to .streamlit/secrets.toml file.")
         
         st.header("Upload Medical Reports")
         
