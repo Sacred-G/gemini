@@ -16,6 +16,7 @@ st.set_page_config(
     page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded",
+    theme="dark"  # Force dark theme
 )
 
 # Initialize session state variables if they don't exist
