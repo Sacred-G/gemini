@@ -76,34 +76,20 @@ def upload_pdfs_to_gemini(client, pdf_paths: List[str]):
     
     for pdf_path in pdf_paths:
         # Try to upload with retries
-        max_retries = 8  # Increased from 5 to 8
+        max_retries = 8
         for attempt in range(max_retries):
             try:
-                st.info(f"Uploading PDF {pdf_path}... (attempt {attempt+1}/{max_retries})")
-                # Add a longer timeout message to set expectations
-                if attempt > 0:
-                    st.info("This may take up to 120 seconds. Please be patient...")
-                
-                # Log file size for debugging
-                import os
-                file_size_bytes = os.path.getsize(pdf_path)
-                file_size_mb = file_size_bytes / (1024 * 1024)
-                st.info(f"File size: {file_size_mb:.2f} MB ({file_size_bytes} bytes)")
-                
                 file = client.files.upload(file=pdf_path)
                 uploaded_files.append(file)
-                st.success(f"Successfully uploaded PDF {pdf_path}")
                 break
             except Exception as e:
                 if attempt < max_retries - 1:
-                    st.warning(f"Retry {attempt+1}/{max_retries}: Error uploading PDF to Gemini API: {str(e)}")
-                    # Wait longer between retries
+                    # Wait between retries
                     import time
-                    wait_time = 120  # Increased to 120 seconds between retries
-                    st.info(f"Waiting {wait_time} seconds before retry {attempt+2}...")
+                    wait_time = 120
                     time.sleep(wait_time)
                 else:
-                    st.error(f"Failed to upload PDF {pdf_path} after {max_retries} attempts: {str(e)}")
+                    st.error(f"Failed to upload a medical report. Please try again.")
     
     return uploaded_files
 
@@ -118,50 +104,35 @@ def upload_pdrs_file(client):
     # URL to the PDRS PDF
     pdrs_url = "https://www.dir.ca.gov/dwc/PDR.pdf"
     
-    # Try to upload with retries - more retries and longer waits for pdrs.pdf
-    max_retries = 10  # Increased from 5 to 10 for the reference file
+    # Try to upload with retries
+    max_retries = 10
     for attempt in range(max_retries):
         try:
-            st.info(f"Downloading and uploading PDRS PDF from {pdrs_url}... (attempt {attempt+1}/{max_retries})")
-            # Add a longer timeout message to set expectations
-            if attempt > 0:
-                st.info("This may take up to 180 seconds. Please be patient...")
-            
             # Download the PDF from URL
-            with st.spinner("Downloading PDRS PDF..."):
-                response = httpx.get(pdrs_url)
-                pdf_data = response.content
-                
-                # Log file size for debugging
-                file_size_bytes = len(pdf_data)
-                file_size_mb = file_size_bytes / (1024 * 1024)
-                st.info(f"PDRS file size: {file_size_mb:.2f} MB ({file_size_bytes} bytes)")
-                
-                # Create a BytesIO object from the PDF data
-                pdf_io = io.BytesIO(pdf_data)
+            response = httpx.get(pdrs_url)
+            pdf_data = response.content
+            
+            # Create a BytesIO object from the PDF data
+            pdf_io = io.BytesIO(pdf_data)
             
             # Upload the PDF to Gemini API
-            with st.spinner("Uploading PDRS PDF to Gemini API..."):
-                pdrs_file = client.files.upload(
-                    file=pdf_io,
-                    config=dict(mime_type='application/pdf')
-                )
+            pdrs_file = client.files.upload(
+                file=pdf_io,
+                config=dict(mime_type='application/pdf')
+            )
             
             # Store the pdrs file in session state
             st.session_state.pdrs_file = pdrs_file
             
-            st.success("Successfully uploaded PDRS PDF file")
             return pdrs_file
         except Exception as e:
             if attempt < max_retries - 1:
-                st.warning(f"Retry {attempt+1}/{max_retries}: Error uploading PDRS PDF file: {str(e)}")
-                # Wait longer between retries for the larger file
+                # Wait between retries
                 import time
-                wait_time = 180  # Increased to 180 seconds between retries
-                st.info(f"Waiting {wait_time} seconds before retry {attempt+2}...")
+                wait_time = 180
                 time.sleep(wait_time)
             else:
-                st.error(f"Failed to upload PDRS PDF file after {max_retries} attempts: {str(e)}")
+                st.error(f"Failed to load reference materials. Please try again.")
                 return None
 
 # Function to create a new chat session with the uploaded PDFs as context
@@ -273,8 +244,7 @@ def main():
     # Try to upload pdrs.pdf when the client is initialized but only once per session
     if st.session_state.client and st.session_state.pdrs_file is None and not st.session_state.pdrs_upload_attempted:
         st.session_state.pdrs_upload_attempted = True
-        with st.spinner("Preparing reference materials..."):
-            upload_pdrs_file(st.session_state.client)
+        upload_pdrs_file(st.session_state.client)
     
 # Sidebar for PDF upload
     with st.sidebar:
@@ -314,8 +284,7 @@ def main():
                         ]
                         
                         # Create a new chat session with the uploaded PDFs as context
-                        if create_chat_session(st.session_state.client, gemini_files):
-                            st.success("Medical reports processed successfully!")
+                        create_chat_session(st.session_state.client, gemini_files)
                         
                         # Clean up temporary files
                         for temp_pdf_path in temp_pdf_paths:
