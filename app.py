@@ -18,6 +18,51 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Apply dark theme with custom CSS
+dark_theme_css = """
+<style>
+:root {
+    --background-color: #0E1117;
+    --secondary-background-color: #262730;
+    --primary-color: #F63366;
+    --text-color: #FAFAFA;
+}
+
+.stApp {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.stSidebar {
+    background-color: var(--secondary-background-color);
+}
+
+.stButton>button {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.stTextInput>div>div>input {
+    background-color: var(--secondary-background-color);
+    color: var(--text-color);
+}
+
+.stSelectbox>div>div>div {
+    background-color: var(--secondary-background-color);
+    color: var(--text-color);
+}
+
+/* Force dark mode for all users */
+@media (prefers-color-scheme: light) {
+    .stApp {
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }
+}
+</style>
+"""
+st.markdown(dark_theme_css, unsafe_allow_html=True)
+
 # Initialize session state variables if they don't exist
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
