@@ -232,7 +232,13 @@ def handle_prompt_selection():
 
 # Main app layout
 def main():
-    # App title and description with logo
+    # Display the banner image at the top of the page with a smaller size
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        # Center column takes up 3/5 of the page width
+        st.image("static/COMPLEGAL.png", use_container_width=True)
+    
+    # App title and description with logo (as a backup if image doesn't load)
     col1, col2 = st.columns([1, 5])
     with col1:
         st.markdown(f'<h1 style="font-size: 60px; margin-bottom: 0;">{logo}</h1>', unsafe_allow_html=True)
