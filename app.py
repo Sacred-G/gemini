@@ -289,11 +289,10 @@ def main():
                 st.error(f"Error initializing Gemini client from secrets: {str(e)}")
                 st.info("Please add your Gemini API key to .streamlit/secrets.toml file.")
         
-        st.header("Upload Medical Reports")
-        
+       
         # PDF upload
         uploaded_files = st.file_uploader(
-            "Upload PDF Medical Reports",
+            "Select Medical Reports",
             type=["pdf"],
             accept_multiple_files=True,
         )
