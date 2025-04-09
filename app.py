@@ -232,10 +232,7 @@ def handle_prompt_selection():
 
 # Main app layout
 def main():
-    # Display the banner image stretched across the top of the page
-    st.image("static/COMPLEGAL.png", use_container_width=True)
-    
-    # App title and description with logo (as a backup if image doesn't load)
+    # App title and description with logo
     col1, col2 = st.columns([1, 5])
     with col1:
         st.markdown(f'<h1 style="font-size: 60px; margin-bottom: 0;">{logo}</h1>', unsafe_allow_html=True)
@@ -250,7 +247,8 @@ def main():
     
 # Sidebar for PDF upload
     with st.sidebar:
-        st.header("")
+        # Display logo image at the top of the sidebar
+        st.image("static/complegal1.png", use_container_width=True)
         
         # Get API key from secrets.toml
         if st.session_state.client is None:
