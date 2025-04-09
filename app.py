@@ -222,7 +222,6 @@ def get_predefined_prompts():
 
     }
 
-    
 
 # Function to handle prompt selection
 def handle_prompt_selection():
@@ -293,6 +292,17 @@ def main():
                             except:
                                 pass
         
+        # Function to clear session state and refresh the app
+        if st.button("🔄 Clear All Reports & Chat", type="primary"):
+            # Clear session state variables
+            st.session_state.chat_history = []
+            st.session_state.uploaded_pdfs = []
+            st.session_state.chat = None
+            st.session_state.pdrs_file = None
+            st.session_state.pdrs_upload_attempted = False
+            st.session_state.selected_prompt = None
+            st.rerun()
+            
         # Display uploaded PDFs
         if st.session_state.uploaded_pdfs:
             st.header("Uploaded Medical Reports")
