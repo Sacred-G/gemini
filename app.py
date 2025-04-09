@@ -287,8 +287,24 @@ def main():
                             except:
                                 pass
         
+        # Custom CSS for the button
+        st.markdown("""
+        <style>
+        .stButton button {
+            background-color: #df4c4d;
+            color: white;
+            border: none;
+        }
+        .stButton button:hover {
+            background-color: #c43c3d;
+            color: white;
+            border: none;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         # Function to clear session state and refresh the app
-        if st.button("🔄 CLEAR ANALYSIS", type="primary"):
+        if st.button("🔄 CLEAR ANALYSIS"):
             # Clear session state variables
             st.session_state.chat_history = []
             st.session_state.uploaded_pdfs = []
