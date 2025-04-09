@@ -1,7 +1,3 @@
-python"""
-Test script to verify if your Gemini API key is working correctly.
-Run this script before using the main application to ensure your API key is valid.
-"""
 
 import os
 import sys

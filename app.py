@@ -213,7 +213,7 @@ def send_message_to_gemini(message: str):
 def get_predefined_prompts():
     """Return a dictionary of predefined prompts for the user to select from."""
     return {
-        "Rating Analysis": "Please analyze the uploaded medical reports and provide a detailed rating according to the uploaded PDRS.",
+        "Rating Analysis": "Read and understand the uploaded pdrs then follow instructions and rate the report. Make sure to double check your Calculations and Findings",
         "Negotiating and Settlement Demand":"If a analysis has been ran provide a settlement and negotiaton demand, if not ran a detailed rating using the uploaded PDRS and provide a settlement and negotiaton demand.",
         "Impairment Calculation": "Calculate the impairment percentage for each impairment mentioned in the medical reports.",
         "Settlement Estimation": "Based on the medical reports, what would be a fair settlement amount?",
