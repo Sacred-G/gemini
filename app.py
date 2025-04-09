@@ -278,7 +278,7 @@ def main():
     
 # Sidebar for PDF upload
     with st.sidebar:
-        st.header("Created by: Anthony C.")
+        st.header("")
         
         # Get API key from secrets.toml
         if st.session_state.client is None:
@@ -330,52 +330,80 @@ def main():
             for pdf in st.session_state.uploaded_pdfs:
                 st.write(f"📄 {pdf['name']}")
     
-    # Main chat interface
-    if st.session_state.chat:
-        # Display chat history
-        chat_container = st.container()
-        with chat_container:
-            for message in st.session_state.chat_history:
-                if message["role"] == "user":
-                    st.chat_message("user").write(message["content"])
-                else:
-                    st.chat_message("assistant").write(message["content"])
-        
-        # Prompt selector
-        if "prompt_selector" not in st.session_state:
-            st.session_state.prompt_selector = "Select a prompt..."
-        
-        # Create columns for prompt selector and send button
-        col1, col2 = st.columns([4, 1])
-        
-        with col1:
-            # Get predefined prompts
-            prompts = get_predefined_prompts()
-            prompt_options = ["Select a prompt..."] + list(prompts.keys())
+    # Check if medical reports have been uploaded
+    if st.session_state.uploaded_pdfs:
+        # Main chat interface - only shown if medical reports are uploaded
+        if st.session_state.chat:
+            # Display chat history
+            chat_container = st.container()
+            with chat_container:
+                for message in st.session_state.chat_history:
+                    if message["role"] == "user":
+                        st.chat_message("user").write(message["content"])
+                    else:
+                        st.chat_message("assistant").write(message["content"])
             
-            # Create the prompt selector
-            st.selectbox(
-                "Select a predefined prompt:",
-                prompt_options,
-                key="prompt_selector",
-                on_change=handle_prompt_selection
-            )
-        
-        with col2:
-            # Add a button to send the selected prompt
-            if st.button("Send Prompt") and st.session_state.selected_prompt:
-                # Get the prompt text
-                prompt_text = prompts[st.session_state.selected_prompt]
+            # Prompt selector
+            if "prompt_selector" not in st.session_state:
+                st.session_state.prompt_selector = "Select a prompt..."
+            
+            # Create columns for prompt selector and send button
+            col1, col2 = st.columns([4, 1])
+            
+            with col1:
+                # Get predefined prompts
+                prompts = get_predefined_prompts()
+                prompt_options = ["Select a prompt..."] + list(prompts.keys())
                 
+                # Create the prompt selector
+                st.selectbox(
+                    "Select a predefined prompt:",
+                    prompt_options,
+                    key="prompt_selector",
+                    on_change=handle_prompt_selection
+                )
+            
+            with col2:
+                # Add a button to send the selected prompt
+                if st.button("Send Prompt") and st.session_state.selected_prompt:
+                    # Get the prompt text
+                    prompt_text = prompts[st.session_state.selected_prompt]
+                    
+                    # Add user message to chat history
+                    st.session_state.chat_history.append({"role": "user", "content": prompt_text})
+                    
+                    # Display user message
+                    st.chat_message("user").write(prompt_text)
+                    
+                    # Get response from Gemini
+                    with st.spinner("Analyzing..."):
+                        response = send_message_to_gemini(prompt_text)
+                    
+                    # Add assistant response to chat history
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
+                    
+                    # Display assistant response
+                    st.chat_message("assistant").write(response)
+                    
+                    # Clear the selected prompt
+                    st.session_state.selected_prompt = None
+                    
+                    # Rerun the app to update the chat history display
+                    st.rerun()
+            
+            # User input
+            user_input = st.chat_input("Ask about the medical reports or select a prompt above...")
+            
+            if user_input:
                 # Add user message to chat history
-                st.session_state.chat_history.append({"role": "user", "content": prompt_text})
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
                 # Display user message
-                st.chat_message("user").write(prompt_text)
+                st.chat_message("user").write(user_input)
                 
                 # Get response from Gemini
                 with st.spinner("Analyzing..."):
-                    response = send_message_to_gemini(prompt_text)
+                    response = send_message_to_gemini(user_input)
                 
                 # Add assistant response to chat history
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
@@ -383,49 +411,11 @@ def main():
                 # Display assistant response
                 st.chat_message("assistant").write(response)
                 
-                # Clear the selected prompt
-                st.session_state.selected_prompt = None
-                
                 # Rerun the app to update the chat history display
                 st.rerun()
-        
-        # User input
-        user_input = st.chat_input("Ask about the medical reports or select a prompt above...")
-        
-        if user_input:
-            # Add user message to chat history
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            
-            # Display user message
-            st.chat_message("user").write(user_input)
-            
-            # Get response from Gemini
-            with st.spinner("Analyzing..."):
-                response = send_message_to_gemini(user_input)
-            
-            # Add assistant response to chat history
-            st.session_state.chat_history.append({"role": "assistant", "content": response})
-            
-            # Display assistant response
-            st.chat_message("assistant").write(response)
-            
-            # Rerun the app to update the chat history display
-            st.rerun()
     else:
-        # Display instructions if no chat session is active
-        st.info(
-            "Select medical reports to start the analysis or click 'Make it Happen' for advanced options."
-        )
-        
-        # Allow users to start a chat without uploading PDFs
-        if st.session_state.client and st.button("Make it Happen"):
-            with st.spinner("Initializing chat..."):
-                # Create a new chat session with just the pdrs.pdf file
-                if create_chat_session(st.session_state.client, []):
-                    st.success("Chat initialized successfully!")
-                    st.rerun()
-                else:
-                    st.error("Failed to initialize chat. Please try again or check if the reference materials are properly loaded.")
+        # Display instructions if no medical reports are uploaded
+        st.warning("⚠️ You must upload medical reports to use the analysis features.")
 
 if __name__ == "__main__":
     main()
