@@ -6,14 +6,18 @@ from typing import List
 from dotenv import load_dotenv
 import io
 import httpx
+import base64
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Define the logo as a base64 string (scales of justice icon)
+logo = "⚖️"
+
 # Set page configuration
 st.set_page_config(
     page_title="CompLegalAI - Workers Compensation Medical Report Analyzer",
-    page_icon="⚖️",
+    page_icon=logo,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -258,9 +262,13 @@ def handle_prompt_selection():
 
 # Main app layout
 def main():
-    # App title and description
-    st.title("CompLegalAI")
-    st.subheader("Workers Compensation Medical Report Analyzer")
+    # App title and description with logo
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        st.markdown(f'<h1 style="font-size: 60px; margin-bottom: 0;">{logo}</h1>', unsafe_allow_html=True)
+    with col2:
+        st.title("CompLegalAI")
+        st.subheader("Workers Compensation Medical Report Analyzer")
     
     # Try to upload pdrs.pdf when the client is initialized but only once per session
     if st.session_state.client and st.session_state.pdrs_file is None and not st.session_state.pdrs_upload_attempted:
