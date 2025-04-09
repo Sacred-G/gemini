@@ -232,11 +232,8 @@ def handle_prompt_selection():
 
 # Main app layout
 def main():
-    # Display the banner image at the top of the page with a smaller size
-    col1, col2, col3 = st.columns([1, 3, 1])
-    with col2:
-        # Center column takes up 3/5 of the page width
-        st.image("static/COMPLEGAL.png", use_container_width=True)
+    # Display the banner image stretched across the top of the page
+    st.image("static/COMPLEGAL.png", use_container_width=True)
     
     # App title and description with logo (as a backup if image doesn't load)
     col1, col2 = st.columns([1, 5])
