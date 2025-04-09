@@ -40,6 +40,8 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
+# Exception for config.toml to ensure theme settings are tracked
+!.streamlit/config.toml
 
 # Temporary files
 tmp/
