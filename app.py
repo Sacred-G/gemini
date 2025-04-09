@@ -15,8 +15,7 @@ st.set_page_config(
     page_title="CompLegalAI - Workers Compensation Medical Report Analyzer",
     page_icon="⚖️",
     layout="wide",
-    initial_sidebar_state="expanded",
-    theme="dark"  # Force dark theme
+    initial_sidebar_state="expanded"
 )
 
 # Initialize session state variables if they don't exist
