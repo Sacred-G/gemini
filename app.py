@@ -414,11 +414,11 @@ def main():
     else:
         # Display instructions if no chat session is active
         st.info(
-            "Upload medical reports to start the analysis or click 'Start Chat' to begin with the default reference materials."
+            "Select medical reports to start the analysis or click 'Make it Happen' for advanced options."
         )
         
         # Allow users to start a chat without uploading PDFs
-        if st.session_state.client and st.button("Start Chat"):
+        if st.session_state.client and st.button("Make it Happen"):
             with st.spinner("Initializing chat..."):
                 # Create a new chat session with just the pdrs.pdf file
                 if create_chat_session(st.session_state.client, []):
