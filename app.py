@@ -219,9 +219,7 @@ def get_predefined_prompts():
         "Settlement Estimation": "Based on the medical reports, what would be a fair settlement amount?",
         "Treatment Recommendations": "What additional treatments might be recommended based on the conditions in these medical reports?",
         "Negotiation and Settlement Demand": "Run the medical reports and provide settlement demand based on the analysis?"
-
     }
-
 
 # Function to handle prompt selection
 def handle_prompt_selection():
@@ -232,13 +230,8 @@ def handle_prompt_selection():
 
 # Main app layout
 def main():
-    # App title and description with logo
-    col1, col2 = st.columns([1, 5])
-    with col1:
-        st.markdown(f'<h1 style="font-size: 60px; margin-bottom: 0;">{logo}</h1>', unsafe_allow_html=True)
-    with col2:
-        st.title("CompLegalAI")
-        st.subheader("Workers Compensation Medical Report Analyzer")
+    # Display the image stretched across the header
+    st.image("static/complegal3.png", use_container_width=True)
     
     # Try to upload pdrs.pdf when the client is initialized but only once per session
     if st.session_state.client and st.session_state.pdrs_file is None and not st.session_state.pdrs_upload_attempted:
@@ -247,8 +240,9 @@ def main():
     
 # Sidebar for PDF upload
     with st.sidebar:
-        # Display logo image at the top of the sidebar
-        st.image("static/complegal1.png", use_container_width=True)
+        # Add title and subtitle to the sidebar
+        st.title("CompLegalAI")
+        st.subheader("Workers Compensation Medical Report Analyzer")
         
         # Get API key from secrets.toml
         if st.session_state.client is None:
