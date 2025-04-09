@@ -255,9 +255,6 @@ def handle_prompt_selection():
     if st.session_state.prompt_selector != "Select a prompt...":
         # Set the selected prompt
         st.session_state.selected_prompt = st.session_state.prompt_selector
-        
-        # Clear the selector to avoid duplicate submissions
-        st.session_state.prompt_selector = "Select a prompt..."
 
 # Main app layout
 def main():
