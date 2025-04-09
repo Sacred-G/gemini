@@ -12,9 +12,10 @@ load_dotenv()
 
 # Set page configuration
 st.set_page_config(
-    page_title="ComplegalAI - Workers Compensation Medical Report Rater",
+    page_title="CompLegalAI - Workers Compensation Medical Report Analyzer",
     page_icon="⚖️",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 # Initialize session state variables if they don't exist
@@ -237,17 +238,16 @@ def send_message_to_gemini(message: str):
 def get_predefined_prompts():
     """Return a dictionary of predefined prompts for the user to select from."""
     return {
-        "Rating Analysis": "Please analyze the uploaded medical reports and provide a detailed rating according to workers compensation guidelines.",
-        "Impairment Calculation": "Calculate the impairment percentage for each condition mentioned in the medical reports.",
+        "Rating Analysis": "Please analyze the uploaded medical reports and provide a detailed rating according to the uploaded PDRS.",
+        "Negotiating and Settlement Demand":"If a analysis has been ran provide a settlement and negotiaton demand, if not ran a detailed rating using the uploaded PDRS and provide a settlement and negotiaton demand.",
+        "Impairment Calculation": "Calculate the impairment percentage for each impairment mentioned in the medical reports.",
         "Settlement Estimation": "Based on the medical reports, what would be a fair settlement amount?",
         "Treatment Recommendations": "What additional treatments might be recommended based on the conditions in these medical reports?",
-        "Disability Duration": "Based on the medical reports, what is the expected duration of disability for the patient?",
-        "Legal Precedents": "Are there any legal precedents that might apply to this case based on the medical conditions described?",
-        "Second Opinion": "Can you provide a second opinion on the diagnoses in these medical reports?",
-        "Future Medical Needs": "What future medical needs might the patient have based on these reports?",
-        "Work Restrictions": "What work restrictions would be appropriate based on these medical reports?",
-        "Appeal Strategy": "What would be a good strategy to appeal this rating if needed?"
+        "Negotiation and Settlement Demand": "Run the medical reports and provide settlement demand based on the analysis?"
+
     }
+
+    
 
 # Function to handle prompt selection
 def handle_prompt_selection():
@@ -279,8 +279,7 @@ def main():
         if st.session_state.client is None:
             try:
                 api_key = st.secrets["GEMINI_API_KEY"]
-                if initialize_gemini_client(api_key):
-                    st.success("Gemini client initialized successfully from secrets!")
+                initialize_gemini_client(api_key)
             except Exception as e:
                 st.error(f"Error initializing Gemini client from secrets: {str(e)}")
                 st.info("Please add your Gemini API key to .streamlit/secrets.toml file.")
