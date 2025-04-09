@@ -259,8 +259,8 @@ def handle_prompt_selection():
 # Main app layout
 def main():
     # App title and description
-    st.title("ComplegalAI")
-    st.subheader("Workers Compensation Medical Report Rater")
+    st.title("CompLegalAI")
+    st.subheader("Workers Compensation Medical Report Analyzer")
     
     # Try to upload pdrs.pdf when the client is initialized but only once per session
     if st.session_state.client and st.session_state.pdrs_file is None and not st.session_state.pdrs_upload_attempted:
