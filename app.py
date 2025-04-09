@@ -293,7 +293,7 @@ def main():
                                 pass
         
         # Function to clear session state and refresh the app
-        if st.button("🔄 Clear All Reports & Chat", type="primary"):
+        if st.button("🔄 CLEAR ANALYSIS", type="primary"):
             # Clear session state variables
             st.session_state.chat_history = []
             st.session_state.uploaded_pdfs = []
