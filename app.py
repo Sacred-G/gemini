@@ -6,7 +6,7 @@ from typing import List
 from dotenv import load_dotenv
 import io
 import httpx
-import base64
+
 
 # Load environment variables from .env file
 load_dotenv()
