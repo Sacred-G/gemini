@@ -12,8 +12,8 @@ def test_api_key(api_key=None):
         
         # Try a simple request to verify the API key
         response = client.models.generate_content(
-            model="gemini-2.5-pro-exp-03-25",
-            contents="Hello, can you confirm this API key is working?"
+            model="gemini-2.5-pro-preview-03-25",
+            contents="Hello, can you confirm this API key is working with this model?"
         )
         
         # If we get here, the API key is valid

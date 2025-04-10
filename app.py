@@ -144,7 +144,7 @@ def create_chat_session(client, uploaded_files):
         
         # Create a new chat session
         chat = client.chats.create(
-            model="gemini-2.5-pro-exp-03-25"
+            model="gemini-2.5-pro-preview-03-25"
         )
         
         # Add the PDFs to the chat context with explicit instructions
