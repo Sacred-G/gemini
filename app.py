@@ -41,6 +41,12 @@ if "pdrs_file" not in st.session_state:
 if "pdrs_upload_attempted" not in st.session_state:
     st.session_state.pdrs_upload_attempted = False
     
+if "chart_file" not in st.session_state:
+    st.session_state.chart_file = None
+
+if "chart_upload_attempted" not in st.session_state:
+    st.session_state.chart_upload_attempted = False
+    
 if "selected_prompt" not in st.session_state:
     st.session_state.selected_prompt = None
 
@@ -135,12 +141,57 @@ def upload_pdrs_file(client):
                 st.error(f"Failed to load reference materials. Please try again.")
                 return None
 
+# Function to upload the 2025 Permanent Disability and Benefits Schedule PDF from URL
+def upload_chart_file(client):
+    """Download and upload the 2025 Permanent Disability and Benefits Schedule PDF from URL and store it in session state."""
+    # Check if chart file is already uploaded
+    if st.session_state.chart_file is not None:
+        # Return the existing chart file
+        return st.session_state.chart_file
+    
+    # URL to the 2025 Permanent Disability and Benefits Schedule PDF
+    chart_url = "https://static1.squarespace.com/static/5c2fcec6b27e396baf7e4a61/t/6781a510620dc016b6b6a82e/1736549648905/2025+Permanent+Disability+and+Benefits+Schedule.pdf"
+    
+    # Try to upload with retries
+    max_retries = 10
+    for attempt in range(max_retries):
+        try:
+            # Download the PDF from URL
+            response = httpx.get(chart_url)
+            pdf_data = response.content
+            
+            # Create a BytesIO object from the PDF data
+            pdf_io = io.BytesIO(pdf_data)
+            
+            # Upload the PDF to Gemini API
+            chart_file = client.files.upload(
+                file=pdf_io,
+                config=dict(mime_type='application/pdf')
+            )
+            
+            # Store the chart file in session state
+            st.session_state.chart_file = chart_file
+            
+            return chart_file
+        except Exception as e:
+            if attempt < max_retries - 1:
+                # Wait between retries
+                import time
+                wait_time = 180
+                time.sleep(wait_time)
+            else:
+                st.error(f"Failed to load 2025 Permanent Disability and Benefits Schedule. Please try again.")
+                return None
+
 # Function to create a new chat session with the uploaded PDFs as context
 def create_chat_session(client, uploaded_files):
     """Create a new chat session with the uploaded PDFs as context."""
     try:
         # Upload the pdrs.pdf file
         pdrs_file = upload_pdrs_file(client)
+        
+        # Upload the 2025 Permanent Disability and Benefits Schedule PDF
+        chart_file = upload_chart_file(client)
         
         # Create a new chat session
         chat = client.chats.create(
@@ -151,7 +202,7 @@ def create_chat_session(client, uploaded_files):
         initial_message = """
         SYSTEM INSTRUCTIONS (FOLLOW THESE EXACTLY):
         You are a worker compensation claims ratings expert. You must use the uploaded PDRS (Permanent Disability Rating Schedule) 
-        to rate medical reports. 
+        to rate medical reports. You also have access to the 2025 Permanent Disability and Benefits Schedule for reference.
         
         IMPORTANT RATING RULES:
         1. DO NOT use the FEC rank
@@ -170,10 +221,12 @@ def create_chat_session(client, uploaded_files):
         I've uploaded medical reports for analysis. Please help understand and rate them according to workers compensation guidelines.
         """
         
-        # Combine user-uploaded PDFs with the pdrs.pdf file
+        # Combine user-uploaded PDFs with the pdrs.pdf and chart files
         all_files = uploaded_files.copy()
         if pdrs_file:
             all_files.append(pdrs_file)
+        if chart_file:
+            all_files.append(chart_file)
         
         # Send an initial message with the PDFs as context
         contents = [initial_message] + all_files
@@ -233,10 +286,15 @@ def main():
     # Display the image stretched across the header
     st.image("static/complegal3.png", use_container_width=True)
     
-    # Try to upload pdrs.pdf when the client is initialized but only once per session
-    if st.session_state.client and st.session_state.pdrs_file is None and not st.session_state.pdrs_upload_attempted:
-        st.session_state.pdrs_upload_attempted = True
-        upload_pdrs_file(st.session_state.client)
+    # Try to upload pdrs.pdf and chart.pdf when the client is initialized but only once per session
+    if st.session_state.client:
+        if st.session_state.pdrs_file is None and not st.session_state.pdrs_upload_attempted:
+            st.session_state.pdrs_upload_attempted = True
+            upload_pdrs_file(st.session_state.client)
+        
+        if st.session_state.chart_file is None and not st.session_state.chart_upload_attempted:
+            st.session_state.chart_upload_attempted = True
+            upload_chart_file(st.session_state.client)
     
 # Sidebar for PDF upload
     with st.sidebar:
@@ -311,6 +369,8 @@ def main():
             st.session_state.chat = None
             st.session_state.pdrs_file = None
             st.session_state.pdrs_upload_attempted = False
+            st.session_state.chart_file = None
+            st.session_state.chart_upload_attempted = False
             st.session_state.selected_prompt = None
             st.rerun()
             
