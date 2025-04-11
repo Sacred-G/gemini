@@ -441,13 +441,7 @@ def main_page():
     
 # Sidebar for PDF upload
     with st.sidebar:
-        # Add logo to the sidebar
-        st.image("static/complegal2-anthony.png", use_container_width=True)
-        
-        # Add title and subtitle to the sidebar
-        st.title("CompLegalAI")
-        st.subheader("Workers Compensation Medical Report Analyzer")
-        
+        # PDF upload section (logo and title are now in main function)
         # Get API key from secrets.toml
         if st.session_state.client is None:
             try:
@@ -689,6 +683,22 @@ def main():
     """Main function to handle page navigation."""
     # Add page navigation to the sidebar
     with st.sidebar:
+        # Add logo to the sidebar
+        st.image("static/complegal2-anthony.png", use_container_width=True)
+        
+        # Add title and subtitle to the sidebar
+        st.title("CompLegalAI")
+        st.subheader("Workers Compensation Medical Report Analyzer")
+        
+        # Get API key from secrets.toml
+        if st.session_state.client is None:
+            try:
+                api_key = st.secrets["GEMINI_API_KEY"]
+                initialize_gemini_client(api_key)
+            except Exception as e:
+                st.error(f"Error initializing Gemini client from secrets: {str(e)}")
+                st.info("Please add your Gemini API key to .streamlit/secrets.toml file.")
+        
         # Add a separator before navigation
         st.markdown("---")
         
