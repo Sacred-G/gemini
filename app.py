@@ -88,6 +88,19 @@ st.markdown("""
     .stProgress > div > div {
         background-color: var(--primary-color) !important;
     }
+    
+    /* Report card styling */
+    .report-card {
+        background-color: var(--secondary-background-color);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .report-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -157,6 +170,9 @@ if "selected_prompt" not in st.session_state:
     
 if "report_history" not in st.session_state:
     st.session_state.report_history = load_report_history()
+
+if "selected_report" not in st.session_state:
+    st.session_state.selected_report = None # Stores the selected history entry object
 
 # Function to initialize the Gemini client
 def initialize_gemini_client(api_key: str):
@@ -393,6 +409,50 @@ def handle_prompt_selection():
         # Set the selected prompt
         st.session_state.selected_prompt = st.session_state.prompt_selector
 
+# Function to handle report selection
+def handle_report_selection(history_entry):
+    """Handle the selection of a report from history."""
+    st.session_state.selected_report = history_entry
+    # Switch to report view page
+    st.session_state.current_page = "Report"
+
+# Report view page function
+def report_view_page():
+    """Page for viewing a selected report analysis."""
+    if not st.session_state.selected_report:
+        st.error("No report selected. Please select a report from the History page.")
+        # Add a button to go back if no report is selected
+        if st.button("← Back to History"):
+            st.session_state.current_page = "History"
+            st.rerun()
+        return
+
+    entry = st.session_state.selected_report
+
+    # Display page header
+    st.title("Saved Report Analysis")
+
+    # Display report information
+    st.subheader("Report Information")
+    st.write(f"**Date:** {entry['timestamp']}")
+    st.write(f"**Prompt:** {entry.get('prompt', 'N/A')}") # Use .get for backward compatibility
+
+    # Display report files
+    st.subheader("Associated Files")
+    for report_name in entry['reports']:
+        st.markdown(f"- 📄 **{report_name}**")
+
+    # Display the saved analysis
+    st.subheader("Generated Analysis")
+    analysis_content = entry.get('analysis', 'Analysis not found.') # Use .get for backward compatibility
+    st.markdown(analysis_content)
+    
+    # Add a button to return to history
+    if st.button("← Back to History"):
+        st.session_state.current_page = "History"
+        st.session_state.selected_report = None
+        st.rerun()
+
 # History page function
 def history_page():
     """Page for viewing report history in detail."""
@@ -409,22 +469,21 @@ def history_page():
     for i, entry in enumerate(reversed(st.session_state.report_history)):
         # Create a card-like container for each history entry
         with st.container():
-            # Use columns for better layout
-            col1, col2 = st.columns([1, 3])
-            
-            with col1:
-                # Display timestamp
-                st.markdown(f"### Entry #{i+1}")
-                st.write(f"**Date:** {entry['timestamp']}")
-            
-            with col2:
-                # Display report names with better formatting
-                st.markdown("### Reports")
-                for report in entry['reports']:
-                    st.markdown(f"- 📄 **{report}**")
-            
-            # Add a separator between entries
-            st.markdown("---")
+            st.markdown(f"""
+            <div class="report-card">
+                <h3>Analysis #{i+1}</h3>
+                <p><strong>Date:</strong> {entry['timestamp']}</p>
+                <p><strong>Prompt:</strong> {entry.get('prompt', 'N/A')}</p>
+                <h4>Associated Files:</h4>
+                <ul>
+                    {"".join([f'<li>📄 {report}</li>' for report in entry['reports']])}
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Add a button to view the saved analysis
+            if st.button(f"View Analysis #{i+1}", key=f"view_report_{i}"):
+                handle_report_selection(entry) # Pass the whole entry
 
 # Main page function
 def main_page():
@@ -497,25 +556,10 @@ def main_page():
                         
                         # Create the chat session
                         success = create_chat_session(st.session_state.client, gemini_files)
-                        
+
                         if success:
-                            # Add to report history
-                            import datetime
-                            
-                            # Create a history entry with timestamp and report names
-                            history_entry = {
-                                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                "reports": [uploaded_file.name for uploaded_file in uploaded_files]
-                            }
-                            
-                            # Add to session state history
-                            st.session_state.report_history.append(history_entry)
-                            
-                            # Save history to file
-                            save_report_history(st.session_state.report_history)
-                            
-                            # Show success message
-                            st.success("Medical reports processed successfully!")
+                            # Show success message - History is saved after analysis now
+                            st.success("Medical reports processed and chat session started!")
                         else:
                             st.error("Failed to create chat session. Please try again.")
                     else:
@@ -562,26 +606,6 @@ def main_page():
             st.header("Uploaded Medical Reports")
             for pdf in st.session_state.uploaded_pdfs:
                 st.write(f"📄 {pdf['name']}")
-        
-        # Display report history
-        if st.session_state.report_history:
-            st.header("Report History")
-            
-            # Create an expander for the history to save space
-            with st.expander("View Previously Processed Reports"):
-                # Display history in reverse chronological order (newest first)
-                for entry in reversed(st.session_state.report_history):
-                    # Create a container for each history entry
-                    with st.container():
-                        # Display timestamp
-                        st.write(f"**{entry['timestamp']}**")
-                        
-                        # Display report names
-                        for report in entry['reports']:
-                            st.write(f"📄 {report}")
-                        
-                        # Add a separator
-                        st.markdown("---")
     
     # Check if medical reports have been uploaded
     if st.session_state.uploaded_pdfs:
@@ -634,13 +658,24 @@ def main_page():
                     
                     # Add assistant response to chat history
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
-                    
+
+                    # Save analysis to history
+                    import datetime
+                    history_entry = {
+                        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "reports": [pdf['name'] for pdf in st.session_state.uploaded_pdfs],
+                        "prompt": prompt_text,
+                        "analysis": response
+                    }
+                    st.session_state.report_history.append(history_entry)
+                    save_report_history(st.session_state.report_history)
+
                     # Display assistant response
                     st.chat_message("assistant").write(response)
-                    
+
                     # Clear the selected prompt
                     st.session_state.selected_prompt = None
-                    
+
                     # Rerun the app to update the chat history display
                     st.rerun()
             
@@ -660,10 +695,21 @@ def main_page():
                 
                 # Add assistant response to chat history
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
-                
+
+                # Save analysis to history
+                import datetime
+                history_entry = {
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "reports": [pdf['name'] for pdf in st.session_state.uploaded_pdfs],
+                    "prompt": user_input, # Save the user's custom input as the prompt
+                    "analysis": response
+                }
+                st.session_state.report_history.append(history_entry)
+                save_report_history(st.session_state.report_history)
+
                 # Display assistant response
                 st.chat_message("assistant").write(response)
-                
+
                 # Rerun the app to update the chat history display
                 st.rerun()
     else:
@@ -725,6 +771,8 @@ def main():
         main_page()
     elif st.session_state.current_page == "History":
         history_page()
+    elif st.session_state.current_page == "Report":
+        report_view_page()
 
 if __name__ == "__main__":
     main()
