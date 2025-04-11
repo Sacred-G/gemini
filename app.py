@@ -25,14 +25,7 @@ st.set_page_config(
 # Apply custom theme with CSS
 st.markdown("""
 <style>
-    /* Main theme colors */
-    :root {
-        --primary-color: #00CCFF;
-        --background-color: #0A1929;
-        --secondary-background-color: #132F4C;
-        --text-color: #FAFAFA;
-        --font: 'sans-serif';
-    }
+    /* Theme colors are now defined in .streamlit/config.toml */
     
     /* Sidebar styling */
     .css-1d391kg, .css-1lcbmhc {
@@ -49,7 +42,7 @@ st.markdown("""
         font-weight: 500 !important;
     }
     .stButton button:hover {
-        background-color: #00A3CC !important;
+        background-color: #0056b3 !important; /* Darker hover color */
         color: white !important;
     }
     
@@ -61,7 +54,7 @@ st.markdown("""
     
     /* Headers */
     h1, h2, h3, h4, h5, h6 {
-        color: var(--primary-color) !important;
+        color: var(--text-color) !important;
     }
     
     /* Chat messages */
@@ -95,7 +88,7 @@ st.markdown("""
         border-radius: 8px;
         padding: 1rem;
         margin-bottom: 1rem;
-        border-left: 4px solid var(--primary-color);
+        border-left: 4px solid var(--primary-color); /* Uses the updated primary color */
     }
     
     .report-card:hover {
@@ -572,22 +565,6 @@ def main_page():
                         except:
                             pass
         
-        # Custom CSS for the button
-        st.markdown("""
-        <style>
-        .stButton button {
-            background-color: #00CCFF;
-            color: white;
-            border: none;
-        }
-        .stButton button:hover {
-            background-color: #00A3CC;
-            color: white;
-            border: none;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
         # Function to clear session state and refresh the app
         if st.button("🔄 CLEAR ANALYSIS"):
             # Clear session state variables
@@ -715,7 +692,7 @@ def main_page():
     else:
         # Display instructions if no medical reports are uploaded with custom styling
         st.markdown("""
-        <div style="padding: 1rem; border-radius: 0.5rem; background-color: #132F4C; color: #00CCFF; border-left: 0.5rem solid #00CCFF;">
+        <div style="padding: 1rem; border-radius: 0.5rem; background-color: var(--secondary-background-color); color: var(--text-color); border-left: 0.5rem solid var(--primary-color);">
             <span style="font-size: 1.2rem;">⚠️ You must upload medical reports to use the analysis features.</span>
         </div>
         """, unsafe_allow_html=True)
