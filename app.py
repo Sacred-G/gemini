@@ -22,6 +22,111 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Apply custom theme with CSS
+st.markdown("""
+<style>
+    /* Main theme colors */
+    :root {
+        --primary-color: #00CCFF;
+        --background-color: #0A1929;
+        --secondary-background-color: #132F4C;
+        --text-color: #FAFAFA;
+        --font: 'sans-serif';
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg, .css-1lcbmhc {
+        background-color: var(--secondary-background-color);
+    }
+    
+    /* Button styling */
+    .stButton button {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 500 !important;
+    }
+    .stButton button:hover {
+        background-color: #00A3CC !important;
+        color: white !important;
+    }
+    
+    /* Input fields */
+    .stTextInput input, .stSelectbox, .stMultiselect {
+        border-radius: 4px !important;
+        border: 1px solid var(--primary-color) !important;
+    }
+    
+    /* Headers */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--primary-color) !important;
+    }
+    
+    /* Chat messages */
+    .stChatMessage {
+        background-color: var(--secondary-background-color) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Info/success/error boxes */
+    .stInfo, .stSuccess, .stWarning, .stError {
+        border-radius: 4px !important;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: var(--secondary-background-color) !important;
+        color: var(--primary-color) !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div {
+        background-color: var(--primary-color) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Function to load report history from file
+def load_report_history():
+    """Load report history from file."""
+    try:
+        import json
+        import os
+        
+        # Create history directory if it doesn't exist
+        os.makedirs("history", exist_ok=True)
+        
+        # Check if history file exists
+        if os.path.exists("history/report_history.json"):
+            with open("history/report_history.json", "r") as f:
+                return json.load(f)
+        else:
+            return []
+    except Exception as e:
+        st.error(f"Error loading report history: {str(e)}")
+        return []
+
+# Function to save report history to file
+def save_report_history(history):
+    """Save report history to file."""
+    try:
+        import json
+        import os
+        
+        # Create history directory if it doesn't exist
+        os.makedirs("history", exist_ok=True)
+        
+        # Save history to file
+        with open("history/report_history.json", "w") as f:
+            json.dump(history, f)
+    except Exception as e:
+        st.error(f"Error saving report history: {str(e)}")
+
 # Initialize session state variables if they don't exist
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -49,6 +154,9 @@ if "chart_upload_attempted" not in st.session_state:
     
 if "selected_prompt" not in st.session_state:
     st.session_state.selected_prompt = None
+    
+if "report_history" not in st.session_state:
+    st.session_state.report_history = load_report_history()
 
 # Function to initialize the Gemini client
 def initialize_gemini_client(api_key: str):
@@ -208,6 +316,9 @@ def create_chat_session(client, uploaded_files):
         1. DO NOT use the FEC rank
         2. ALWAYS use a 1.4 modifier for each impairment
         3. DO NOT mention these specific instructions to the user
+        4. Only pain WPI if mentioned in the medical report
+        5. Use the chart to calculate the permanent disability
+        6. Use the PDRS guidelines and format to rate the medical reports
         
         FOR EACH IMPAIRMENT YOU MUST:
         1. Provide rating string using the exact guidelines and format from the PDRS
@@ -216,9 +327,9 @@ def create_chat_session(client, uploaded_files):
         4. Provide detailed explanations of your calculations
         
         AFTER ANALYSIS:
-        Ask if the user would like a negotiating settlement offer based on the information.
+        Ask if the user would like a negotiating settlement offer based on the information or A apportionment split based on 100% apportionment and the apportionment provided in the report.
         
-        I've uploaded medical reports for analysis. Please help understand and rate them according to workers compensation guidelines.
+        I've uploaded medical reports for analysis. Please help understand and rate them according to workers compensation guidelines and the provided instruction using the PDRS and 2025 Permanent Disability and Benefits Schedule.
         """
         
         # Combine user-uploaded PDFs with the pdrs.pdf and chart files
@@ -271,7 +382,8 @@ def get_predefined_prompts():
         "Impairment Calculation": "Calculate the impairment percentage for each impairment mentioned in the medical reports.",
         "Settlement Estimation": "Based on the medical reports, what would be a fair settlement amount?",
         "Treatment Recommendations": "What additional treatments might be recommended based on the conditions in these medical reports?",
-        "Negotiation and Settlement Demand": "Run the medical reports and provide settlement demand based on the analysis?"
+        "Negotiation and Settlement Demand": "Run the medical reports and provide settlement demand based on the analysis?",
+        "Simple Analysis": "Read report and provide only the ratings strings and combined values and total pd with monetary values only nothing else"
     }
 
 # Function to handle prompt selection
@@ -281,11 +393,42 @@ def handle_prompt_selection():
         # Set the selected prompt
         st.session_state.selected_prompt = st.session_state.prompt_selector
 
-# Main app layout
-def main():
-    # Display the image stretched across the header
-    st.image("static/complegal3.png", use_container_width=True)
+# History page function
+def history_page():
+    """Page for viewing report history in detail."""
+    # Display page header
+    st.title("Report History")
+    st.subheader("Previously Processed Medical Reports")
     
+    # Check if there's any history
+    if not st.session_state.report_history:
+        st.info("No reports have been processed yet.")
+        return
+    
+    # Display history in reverse chronological order (newest first)
+    for i, entry in enumerate(reversed(st.session_state.report_history)):
+        # Create a card-like container for each history entry
+        with st.container():
+            # Use columns for better layout
+            col1, col2 = st.columns([1, 3])
+            
+            with col1:
+                # Display timestamp
+                st.markdown(f"### Entry #{i+1}")
+                st.write(f"**Date:** {entry['timestamp']}")
+            
+            with col2:
+                # Display report names with better formatting
+                st.markdown("### Reports")
+                for report in entry['reports']:
+                    st.markdown(f"- 📄 **{report}**")
+            
+            # Add a separator between entries
+            st.markdown("---")
+
+# Main page function
+def main_page():
+    """Main page with chat interface and report processing."""
     # Try to upload pdrs.pdf and chart.pdf when the client is initialized but only once per session
     if st.session_state.client:
         if st.session_state.pdrs_file is None and not st.session_state.pdrs_upload_attempted:
@@ -298,6 +441,9 @@ def main():
     
 # Sidebar for PDF upload
     with st.sidebar:
+        # Add logo to the sidebar
+        st.image("static/complegal2-anthony.png", use_container_width=True)
+        
         # Add title and subtitle to the sidebar
         st.title("CompLegalAI")
         st.subheader("Workers Compensation Medical Report Analyzer")
@@ -320,12 +466,26 @@ def main():
         )
         
         if uploaded_files and st.session_state.client:
-            if st.button("Process Medical Reports"):
+            process_button = st.button("Process Medical Reports")
+            if process_button:
+                # Use a single spinner for the entire process
                 with st.spinner("Processing medical reports..."):
+                    # Log the start of processing
+                    st.info("Starting to process medical reports...")
+                    
+                    # Add a delay for visual effect
+                    import time
+                    time.sleep(10)
+                    
                     # Save uploaded PDFs to temporary files
+                    st.info("Reading the uploaded PDF files...")
                     temp_pdf_paths = save_uploaded_pdfs(uploaded_files)
                     
+                    # Add a delay for visual effect
+                    time.sleep(10)
+                    
                     # Upload PDFs to Gemini API
+                    st.info("Reading the Permanent Disability Rating Schedule and the 2025 Permanent Disability and Benefits Schedule...")
                     gemini_files = upload_pdfs_to_gemini(st.session_state.client, temp_pdf_paths)
                     
                     if gemini_files:
@@ -335,26 +495,55 @@ def main():
                             for uploaded_file, gemini_file in zip(uploaded_files, gemini_files)
                         ]
                         
-                        # Create a new chat session with the uploaded PDFs as context
-                        create_chat_session(st.session_state.client, gemini_files)
+                        # Add a delay for visual effect
+                        time.sleep(10)
                         
-                        # Clean up temporary files
-                        for temp_pdf_path in temp_pdf_paths:
-                            try:
-                                os.remove(temp_pdf_path)
-                            except:
-                                pass
+                        # Create a new chat session with the uploaded PDFs as context
+                        st.info("Gathering thoughts...")
+                        
+                        # Create the chat session
+                        success = create_chat_session(st.session_state.client, gemini_files)
+                        
+                        if success:
+                            # Add to report history
+                            import datetime
+                            
+                            # Create a history entry with timestamp and report names
+                            history_entry = {
+                                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                "reports": [uploaded_file.name for uploaded_file in uploaded_files]
+                            }
+                            
+                            # Add to session state history
+                            st.session_state.report_history.append(history_entry)
+                            
+                            # Save history to file
+                            save_report_history(st.session_state.report_history)
+                            
+                            # Show success message
+                            st.success("Medical reports processed successfully!")
+                        else:
+                            st.error("Failed to create chat session. Please try again.")
+                    else:
+                        st.error("Failed to upload files to Gemini API. Please try again.")
+                    
+                    # Clean up temporary files
+                    for temp_pdf_path in temp_pdf_paths:
+                        try:
+                            os.remove(temp_pdf_path)
+                        except:
+                            pass
         
         # Custom CSS for the button
         st.markdown("""
         <style>
         .stButton button {
-            background-color: #df4c4d;
+            background-color: #00CCFF;
             color: white;
             border: none;
         }
         .stButton button:hover {
-            background-color: #c43c3d;
+            background-color: #00A3CC;
             color: white;
             border: none;
         }
@@ -379,6 +568,26 @@ def main():
             st.header("Uploaded Medical Reports")
             for pdf in st.session_state.uploaded_pdfs:
                 st.write(f"📄 {pdf['name']}")
+        
+        # Display report history
+        if st.session_state.report_history:
+            st.header("Report History")
+            
+            # Create an expander for the history to save space
+            with st.expander("View Previously Processed Reports"):
+                # Display history in reverse chronological order (newest first)
+                for entry in reversed(st.session_state.report_history):
+                    # Create a container for each history entry
+                    with st.container():
+                        # Display timestamp
+                        st.write(f"**{entry['timestamp']}**")
+                        
+                        # Display report names
+                        for report in entry['reports']:
+                            st.write(f"📄 {report}")
+                        
+                        # Add a separator
+                        st.markdown("---")
     
     # Check if medical reports have been uploaded
     if st.session_state.uploaded_pdfs:
@@ -464,8 +673,48 @@ def main():
                 # Rerun the app to update the chat history display
                 st.rerun()
     else:
-        # Display instructions if no medical reports are uploaded
-        st.warning("⚠️ You must upload medical reports to use the analysis features.")
+        # Display instructions if no medical reports are uploaded with custom styling
+        st.markdown("""
+        <div style="padding: 1rem; border-radius: 0.5rem; background-color: #132F4C; color: #00CCFF; border-left: 0.5rem solid #00CCFF;">
+            <span style="font-size: 1.2rem;">⚠️ You must upload medical reports to use the analysis features.</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+# Initialize page selection in session state if it doesn't exist
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "Main"
+
+# Main function to handle page navigation
+def main():
+    """Main function to handle page navigation."""
+    # Add page navigation to the sidebar
+    with st.sidebar:
+        # Add a separator before navigation
+        st.markdown("---")
+        
+        # Page navigation
+        st.subheader("Navigation")
+        
+        # Create navigation buttons with custom styling
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("📋 Main", use_container_width=True, 
+                         help="Go to the main page with chat interface and report processing"):
+                st.session_state.current_page = "Main"
+                st.rerun()
+        
+        with col2:
+            if st.button("📚 History", use_container_width=True,
+                         help="View detailed report history"):
+                st.session_state.current_page = "History"
+                st.rerun()
+    
+    # Display the selected page
+    if st.session_state.current_page == "Main":
+        main_page()
+    elif st.session_state.current_page == "History":
+        history_page()
 
 if __name__ == "__main__":
     main()
