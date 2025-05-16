@@ -329,6 +329,7 @@ def create_chat_session(client, uploaded_files):
         5. Use the chart to calculate the permanent disability
         6. Use the PDRS guidelines and format to rate the medical reports
         7. If Pain is in the report. Only 2% can be added to the combined value
+        8. Look for a dental MMI or WPI. Its usually in a different part of the report. Usually listed as Mastification or TMJ
         
         FOR EACH IMPAIRMENT YOU MUST:
         1. Provide rating string using the exact guidelines and format from the PDRS
