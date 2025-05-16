@@ -328,6 +328,7 @@ def create_chat_session(client, uploaded_files):
         4. Only pain WPI if mentioned in the medical report
         5. Use the chart to calculate the permanent disability
         6. Use the PDRS guidelines and format to rate the medical reports
+        7. If Pain is in the report. Only 2% can be added to the combined value
         
         FOR EACH IMPAIRMENT YOU MUST:
         1. Provide rating string using the exact guidelines and format from the PDRS
@@ -392,7 +393,7 @@ def get_predefined_prompts():
         "Settlement Estimation": "Based on the medical reports, what would be a fair settlement amount?",
         "Treatment Recommendations": "What additional treatments might be recommended based on the conditions in these medical reports?",
         "Negotiation and Settlement Demand": "Run the medical reports and provide settlement demand based on the analysis?",
-        "Simple Analysis": "Read report and provide only the ratings strings and combined values and total pd with monetary values only nothing else"
+        "Simple Analysis": "Read the PDRS and the report and provide only the ratings strings and combined values and total pd with monetary values only nothing else, Then ask the user if they would like a more detailed calcuation with this numbers or if their is something they would like to edit"
     }
 
 # Function to handle prompt selection
