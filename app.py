@@ -330,6 +330,9 @@ def create_chat_session(client, uploaded_files):
         6. Use the PDRS guidelines and format to rate the medical reports
         7. If Pain is in the report. Only 2% can be added to the combined value
         8. Look for a dental MMI or WPI. Its usually in a different part of the report. Usually listed as Mastification or TMJ
+        9. The Specific and cumalative injury needs to be caclulated and figured seperately then take the sum of the two.
+        10. Make sure to read the the entire report and determine the employment of the patient and not just the first job it shows. 
+        11. The apportionment needs to be calculated for each rating string before the combining.
         
         FOR EACH IMPAIRMENT YOU MUST:
         1. Provide rating string using the exact guidelines and format from the PDRS
